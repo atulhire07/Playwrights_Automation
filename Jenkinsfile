@@ -80,8 +80,6 @@ emailext(
         </html>
     """
 )
-
-                attachmentsPattern: 'allure-report.zip'
             
         }
     }
