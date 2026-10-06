@@ -82,7 +82,7 @@ emailext(
 )
 
                 attachmentsPattern: 'allure-report.zip'
-            )
+            
         }
     }
 }
