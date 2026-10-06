@@ -1,5 +1,8 @@
 pipeline {
-    agent any
+
+    agent {
+        label 'built-in'
+    }
 
     stages {
 
@@ -44,6 +47,7 @@ pipeline {
     }
 
     post {
+
         always {
 
             archiveArtifacts(
@@ -68,13 +72,11 @@ pipeline {
 
                     <hr>
 
-                    <p>
-                    Playwright automation execution has completed.
-                    </p>
+                    <p>Playwright automation execution has completed.</p>
 
                     <p>
-                    The complete Allure HTML report is attached as:
-                    <b>allure-report.zip</b>
+                    The complete Allure HTML report is attached as
+                    <b>allure-report.zip</b>.
                     </p>
 
                     <p>
@@ -89,4 +91,4 @@ pipeline {
             )
         }
     }
-}s
+}
