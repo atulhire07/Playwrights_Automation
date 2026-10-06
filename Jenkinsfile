@@ -4,7 +4,7 @@ pipeline {
     stages {
 
         // ==========================================
-        // 1. CHECKOUT SOURCE CODE
+        // 1. CHECKOUT
         // ==========================================
         stage('Checkout') {
             steps {
@@ -13,7 +13,7 @@ pipeline {
         }
 
         // ==========================================
-        // 2. INSTALL NPM DEPENDENCIES
+        // 2. INSTALL DEPENDENCIES
         // ==========================================
         stage('Install Dependencies') {
             steps {
@@ -22,7 +22,7 @@ pipeline {
         }
 
         // ==========================================
-        // 3. INSTALL PLAYWRIGHT BROWSERS
+        // 3. INSTALL PLAYWRIGHT
         // ==========================================
         stage('Install Playwright Browsers') {
             steps {
@@ -49,20 +49,50 @@ pipeline {
         }
 
         // ==========================================
-        // 6. CREATE ALLURE ZIP
+        // 6. CREATE + VALIDATE ALLURE ZIP
         // ==========================================
         stage('Create Allure ZIP') {
             steps {
                 bat '''
+                    echo ==========================================
+                    echo Creating Allure ZIP
+                    echo ==========================================
+
                     if exist allure-report.zip del /f /q allure-report.zip
 
-                    powershell -Command "Compress-Archive -Path allure-report -DestinationPath allure-report.zip -Force"
+                    if not exist "C:\\Program Files\\7-Zip\\7z.exe" (
+                        echo ERROR: 7-Zip is not installed at:
+                        echo C:\\Program Files\\7-Zip\\7z.exe
+                        exit /b 1
+                    )
+
+                    "C:\\Program Files\\7-Zip\\7z.exe" a -tzip allure-report.zip ".\\allure-report\\*"
+
+                    if not exist allure-report.zip (
+                        echo ERROR: allure-report.zip was not created.
+                        exit /b 1
+                    )
+
+                    echo ==========================================
+                    echo Validating Allure ZIP
+                    echo ==========================================
+
+                    "C:\\Program Files\\7-Zip\\7z.exe" t allure-report.zip
+
+                    if errorlevel 1 (
+                        echo ERROR: Allure ZIP validation FAILED.
+                        exit /b 1
+                    )
+
+                    echo ==========================================
+                    echo Allure ZIP created and validated successfully.
+                    echo ==========================================
                 '''
             }
         }
 
         // ==========================================
-        // 7. PUBLISH ALLURE REPORT IN JENKINS
+        // 7. PUBLISH ALLURE REPORT
         // ==========================================
         stage('Publish Allure Report') {
             steps {
@@ -80,7 +110,7 @@ pipeline {
     }
 
     // ==============================================
-    // POST BUILD ACTIONS
+    // POST BUILD
     // ==============================================
     post {
 
@@ -131,20 +161,24 @@ pipeline {
                     <h3>Allure Report</h3>
 
                     <p>
+                        Open the Jenkins build to access the Allure Report:
+                    </p>
+
+                    <p>
                         <a href="${BUILD_URL}">
-                            Open Jenkins Build
+                            <b>Open Jenkins Build</b>
                         </a>
                     </p>
 
                     <p>
-                        The Allure report is available under the
-                        <b>Allure Report</b> link on the Jenkins build page.
+                        The Jenkins build page contains the
+                        <b>Allure Report</b> link.
                     </p>
 
                     <h3>Allure ZIP</h3>
 
                     <p>
-                        The complete Allure report is attached to this email:
+                        A validated Allure report ZIP file is attached:
                     </p>
 
                     <p>
@@ -173,7 +207,7 @@ pipeline {
 
                 mimeType: 'text/html',
 
-                // Attach Allure ZIP
+                // Attach validated ZIP
                 attachmentsPattern: 'allure-report.zip'
             )
         }
