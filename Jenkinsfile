@@ -28,10 +28,10 @@ pipeline {
         }
 
         stage('Generate Allure Report') {
-            steps {
-                bat 'npx allure generate allure-results --clean -o allure-report'
-            }
-        }
+         steps {
+          bat 'npx allure generate allure-results --output allure-report'
+    }
+}
 
         stage('Create Allure ZIP') {
             steps {
