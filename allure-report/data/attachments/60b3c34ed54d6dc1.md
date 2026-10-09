@@ -1,0 +1,75 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: Checkout.spec.ts >> SauceDemo - Checkout Module >> SD-CHECK-004 - Postal code mandatory @regression
+- Location: tests\Checkout.spec.ts:117:9
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Invalid url: "/"
+Call log:
+  - navigating to "/", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  1  | import { Page, Locator } from '@playwright/test';
+  2  | 
+  3  | export class LoginPage {
+  4  | 
+  5  |     readonly page: Page;
+  6  |     readonly usernameInput: Locator;
+  7  |     readonly passwordInput: Locator;
+  8  |     readonly loginButton: Locator;
+  9  |     readonly errorMessage: Locator;
+  10 | 
+  11 |     constructor(page: Page) {
+  12 | 
+  13 |         this.page = page;
+  14 | 
+  15 |         this.usernameInput =
+  16 |             page.locator('[data-test="username"]');
+  17 | 
+  18 |         this.passwordInput =
+  19 |             page.locator('[data-test="password"]');
+  20 | 
+  21 |         this.loginButton =
+  22 |             page.locator('[data-test="login-button"]');
+  23 | 
+  24 |         this.errorMessage =
+  25 |             page.locator('[data-test="error"]');
+  26 |     }
+  27 | 
+  28 |     async open() {
+> 29 |         await this.page.goto('/');
+     |                         ^ Error: page.goto: Protocol error (Page.navigate): Invalid url: "/"
+  30 |     }
+  31 | 
+  32 |     async enterUsername(username: string) {
+  33 |         await this.usernameInput.fill(username);
+  34 |     }
+  35 | 
+  36 |     async enterPassword(password: string) {
+  37 |         await this.passwordInput.fill(password);
+  38 |     }
+  39 | 
+  40 |     async clickLogin() {
+  41 |         await this.loginButton.click();
+  42 |     }
+  43 | 
+  44 |     async login(username: string, password: string) {
+  45 | 
+  46 |         await this.enterUsername(username);
+  47 |         await this.enterPassword(password);
+  48 |         await this.clickLogin();
+  49 |     }
+  50 | }
+```
