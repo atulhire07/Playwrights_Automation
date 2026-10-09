@@ -1,69 +1,47 @@
+
 pipeline {
     agent any
 
     stages {
-
-        // ==========================================
-        // 1. CHECKOUT SOURCE CODE
-        // ==========================================
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        // ==========================================
-        // 2. INSTALL NPM DEPENDENCIES
-        // ==========================================
         stage('Install Dependencies') {
             steps {
                 bat 'npm ci'
             }
         }
 
-        // ==========================================
-        // 3. INSTALL PLAYWRIGHT BROWSERS
-        // ==========================================
         stage('Install Playwright Browsers') {
             steps {
                 bat 'npx playwright install'
             }
         }
 
-        // ==========================================
-        // 4. RUN PLAYWRIGHT TESTS
-        // ==========================================
         stage('Run Playwright Tests') {
             steps {
                 bat 'npx playwright test'
             }
         }
 
-        // ==========================================
-        // 5. GENERATE ALLURE REPORT
-        // ==========================================
         stage('Generate Allure Report') {
             steps {
-                bat 'npx allure generate allure-results -o allure-report'
+                bat 'npx allure generate allure-results --clean -o allure-report'
             }
         }
 
-        // ==========================================
-        // 6. CREATE ALLURE ZIP
-        // ==========================================
         stage('Create Allure ZIP') {
             steps {
                 bat '''
                     if exist allure-report.zip del /f /q allure-report.zip
-
-                    powershell -Command "Compress-Archive -Path allure-report -DestinationPath allure-report.zip -Force"
+                    powershell -NoProfile -ExecutionPolicy Bypass -Command "Compress-Archive -Path 'allure-report\\*' -DestinationPath 'allure-report.zip' -Force"
                 '''
             }
         }
 
-        // ==========================================
-        // 7. PUBLISH ALLURE REPORT IN JENKINS
-        // ==========================================
         stage('Publish Allure Report') {
             steps {
                 publishHTML([
@@ -79,103 +57,69 @@ pipeline {
         }
     }
 
-    // ==============================================
-    // POST BUILD ACTIONS
-    // ==============================================
     post {
-
         always {
-
-            // ======================================
-            // ARCHIVE ALLURE REPORT + ZIP
-            // ======================================
             archiveArtifacts(
                 artifacts: 'allure-report/**, allure-report.zip',
                 allowEmptyArchive: true
             )
 
-            // ======================================
-            // SEND EMAIL
-            // ======================================
-            emailext(
-                to: 'atulhire55@gmail.com',
+            script {
+                try {
+                    emailext(
+                        to: 'atulhire55@gmail.com',
+                        subject: "Playwright Test - Build #${BUILD_NUMBER} - ${currentBuild.currentResult}",
+                        mimeType: 'text/html',
+                        body: """
+                            <html>
+                            <body>
+                                <h2>Playwright Automation Test Results</h2>
 
-                subject: "Playwright Test - Build #${BUILD_NUMBER} - ${currentBuild.currentResult}",
+                                <p><b>Project:</b> SauceDemo-Playwright</p>
+                                <p><b>Build Number:</b> #${BUILD_NUMBER}</p>
+                                <p><b>Build Status:</b> ${currentBuild.currentResult}</p>
 
-                body: """
-                    <html>
-                    <body>
+                                <hr>
 
-                    <h2>Playwright Automation Test Results</h2>
+                                <h3>Test Execution</h3>
+                                <p>Playwright automation execution has completed.</p>
 
-                    <p>
-                        <b>Project:</b> SauceDemo-Playwright
-                    </p>
+                                <h3>Allure Report</h3>
+                                <p>
+                                    <a href="${BUILD_URL}">
+                                        Open Jenkins Build
+                                    </a>
+                                </p>
 
-                    <p>
-                        <b>Build Number:</b> #${BUILD_NUMBER}
-                    </p>
+                                <p>
+                                    Open the Allure Report link on the Jenkins
+                                    build page to view detailed test results.
+                                </p>
 
-                    <p>
-                        <b>Build Status:</b> ${currentBuild.currentResult}
-                    </p>
+                                <p>
+                                    The Allure ZIP is available under the
+                                    archived artifacts of this build.
+                                </p>
 
-                    <hr>
+                                <hr>
 
-                    <h3>Test Execution</h3>
+                                <p>
+                                    <b>Jenkins Build URL:</b><br>
+                                    <a href="${BUILD_URL}">${BUILD_URL}</a>
+                                </p>
 
-                    <p>
-                        Playwright automation execution has been completed.
-                    </p>
+                                <p>Regards,<br>Jenkins CI/CD</p>
+                            </body>
+                            </html>
+                        """
+                    )
 
-                    <h3>Allure Report</h3>
+                    echo 'Email notification step completed.'
 
-                    <p>
-                        <a href="${BUILD_URL}">
-                            Open Jenkins Build
-                        </a>
-                    </p>
-
-                    <p>
-                        The Allure report is available under the
-                        <b>Allure Report</b> link on the Jenkins build page.
-                    </p>
-
-                    <h3>Allure ZIP</h3>
-
-                    <p>
-                        The complete Allure report is attached to this email:
-                    </p>
-
-                    <p>
-                        <b>📎 allure-report.zip</b>
-                    </p>
-
-                    <hr>
-
-                    <p>
-                        <b>Jenkins Build URL:</b><br>
-                        <a href="${BUILD_URL}">
-                            ${BUILD_URL}
-                        </a>
-                    </p>
-
-                    <br>
-
-                    <p>
-                        Regards,<br>
-                        <b>Jenkins CI/CD</b>
-                    </p>
-
-                    </body>
-                    </html>
-                """,
-
-                mimeType: 'text/html',
-
-                // Attach Allure ZIP
-                attachmentsPattern: 'allure-report.zip'
-            )
+                } catch (Exception e) {
+                    echo "Email notification failed: ${e.getMessage()}"
+                }
+            }
         }
     }
 }
