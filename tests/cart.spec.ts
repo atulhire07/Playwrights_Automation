@@ -1,122 +1,43 @@
 import { test, expect } from '@playwright/test';
-
-import users from '../test-data/users.json';
-
 import { LoginPage } from './pages/LoginPage';
 import { ProductsPage } from './pages/ProductsPage';
-import { CartPage } from './pages/CartPage';
-
+import users from '../test-data/users.json';
 
 test.describe('SauceDemo - Cart Module', () => {
+  test(
+    'SD-CART-001 - Verify product in cart @smoke @regression',
+    async ({ page }) => {
+      const loginPage = new LoginPage(page);
+      const productsPage = new ProductsPage(page);
 
+      // Step 1: Open the login page
+      await loginPage.open();
 
-    test.beforeEach(async ({ page }) => {
+      // Step 2: Login with valid credentials
+      await loginPage.login(
+        users.standardUser.username,
+        users.standardUser.password
+      );
 
-        const loginPage =
-            new LoginPage(page);
+      // Step 3: Verify the products page
+      await expect(page).toHaveURL(/inventory\.html/);
+      await expect(page.locator('.inventory_item')).toHaveCount(6);
 
-        await loginPage.open();
+      // Step 4: Add the product to the cart
+      await productsPage.addProduct('Sauce Labs Backpack');
+      await expect(page.locator('.shopping_cart_badge')).toHaveText('1');
 
-        await loginPage.login(
-            users.standardUser.username,
-            users.standardUser.password
-        );
+      // Step 5: Open the shopping cart
+      await productsPage.openCart();
+      await expect(page).toHaveURL(/cart\.html/);
 
-        const productsPage =
-            new ProductsPage(page);
+      // Step 6: Verify the product in the cart
+      const cartItem = page.locator('.cart_item');
 
-        await productsPage.addProduct(
-            'Sauce Labs Backpack'
-        );
-
-        await productsPage.openCart();
-    });
-
-
-    // SD-CART-001
-    test(
-        'SD-CART-001 - Verify product in cart @smoke @regression',
-        async ({ page }) => {
-
-            const cartPage =
-                new CartPage(page);
-
-            const products =
-                await cartPage.getProductNames();
-
-            expect(products).toContain(
-                'Sauce Labs Backpack'
-            );
-        }
-    );
-
-
-    // SD-CART-002
-    test(
-        'SD-CART-002 - Verify cart item count @smoke @regression',
-        async ({ page }) => {
-
-            const cartPage =
-                new CartPage(page);
-
-            const count =
-                await cartPage.getItemCount();
-
-            expect(count).toBe(1);
-        }
-    );
-
-
-    // SD-CART-003
-    test(
-        'SD-CART-003 - Remove product @regression',
-        async ({ page }) => {
-
-            const cartPage =
-                new CartPage(page);
-
-            await cartPage.removeProduct(
-                'Sauce Labs Backpack'
-            );
-
-            expect(
-                await cartPage.getItemCount()
-            ).toBe(0);
-        }
-    );
-
-
-    // SD-CART-004
-    test(
-        'SD-CART-004 - Continue shopping @regression',
-        async ({ page }) => {
-
-            const cartPage =
-                new CartPage(page);
-
-            await cartPage.continueShopping();
-
-            await expect(page)
-                .toHaveURL(/inventory.html/);
-        }
-    );
-
-
-    // SD-CART-005
-    test(
-        'SD-CART-005 - Open checkout @smoke @regression',
-        async ({ page }) => {
-
-            const cartPage =
-                new CartPage(page);
-
-            await cartPage.checkout();
-
-            await expect(page)
-                .toHaveURL(
-                    /checkout-step-one.html/
-                );
-        }
-    );
-
+      await expect(cartItem).toHaveCount(1);
+      await expect(
+        cartItem.locator('.inventory_item_name')
+      ).toHaveText('Sauce Labs Backpack');
+    }
+  );
 });

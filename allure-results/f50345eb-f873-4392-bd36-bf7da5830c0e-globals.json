@@ -1,0 +1,1 @@
+{"attachments":[],"errors":[{"message":"beforeEach hook failed: Test timeout of 30000ms exceeded while running \"beforeEach\" hook.","trace":"Test timeout of 30000ms exceeded while running \"beforeEach\" hook.\n    at C:\\AI Agents\\nirvanaxp-tester\\NirvanaXP Admin\\tests\\Checkout.spec.ts:13:10","timestamp":1791535272833}]}
